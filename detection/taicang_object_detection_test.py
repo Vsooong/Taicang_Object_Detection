@@ -127,8 +127,6 @@ def draw_bbox_matplot(img, bbox, labels, confidence, save_dir, name):
 
 def object_detection_show(model, imgs, image_save_path, threshold):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    # model = get_model_instance_segmentation(num_classes)
-    # model.load_state_dict(torch.load(model_save_path, map_location=device))
     model.to(device)
     model.eval()
     for pic in imgs:
@@ -200,7 +198,7 @@ def clear_test_samples(test_img_save_path):
         if i.endswith('det.jpg'):
             path = os.path.join(test_img_save_path, i)
             os.remove(path)
-            print('removed: ', path)
+            # print('removed: ', path)
 
 
 if __name__ == "__main__":
@@ -218,7 +216,7 @@ if __name__ == "__main__":
     test_img_save_path = "/media/dl/HYX/samples/test/"
     # test_img_save_path='F:/data/Taicang/samples'
     test_img = [os.path.join(test_img_save_path, i) for i in os.listdir(test_img_save_path)]
-    model = train.get_pretrained_model()
+    clear_test_samples(test_img_save_path)
+
+    model = train.get_pretrained_model(save_path)
     object_detection_show(model, test_img, test_img_save_path, threshold=conf_thres)
-    #
-    # clear_test_samples(test_img_save_path)

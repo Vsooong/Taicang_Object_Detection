@@ -147,17 +147,20 @@ def train_model(model):
         torch.save(model.state_dict(), save_path)
 
 
-def get_transfer_model():
+def get_transfer_model(transfer_path='../Save/model-4278.pth'):
     # get the model using our helper function
     model = get_model_instance_segmentation(3, False)
-    model.load_state_dict(torch.load('../Save/model-4278.pth'))
+    model.load_state_dict(torch.load(transfer_path))
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    print('Model transfers from:', transfer_path)
     return model
+
 
 def get_pretrained_model(pretrain_path):
     model = get_model_instance_segmentation(num_classes, False)
     model.load_state_dict(torch.load(pretrain_path))
+    print('Model from:', pretrain_path)
     return model
 
 
