@@ -13,6 +13,7 @@ import random
 from torch.utils.data import Dataset, DataLoader
 import sys
 
+
 # from torchsummary import summary
 
 
@@ -102,7 +103,6 @@ def get_transform(train=True):
 
 def train_model(model):
     # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda:1') if torch.cuda.is_available() else torch.device('cpu')
     print('Using device: ', device)
 
     dataset = TaiCangDataset(get_transform(train=True))
@@ -150,7 +150,7 @@ def train_model(model):
 def get_transfer_model(transfer_path='../Save/model-4278.pth'):
     # get the model using our helper function
     model = get_model_instance_segmentation(3, False)
-    model.load_state_dict(torch.load(transfer_path))
+    model.load_state_dict(torch.load(transfer_path, map_location=device))
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
     print('Model transfers from:', transfer_path)
@@ -159,7 +159,7 @@ def get_transfer_model(transfer_path='../Save/model-4278.pth'):
 
 def get_pretrained_model(pretrain_path):
     model = get_model_instance_segmentation(num_classes, False)
-    model.load_state_dict(torch.load(pretrain_path))
+    model.load_state_dict(torch.load(pretrain_path, map_location=device))
     print('Model from:', pretrain_path)
     return model
 
@@ -168,7 +168,8 @@ def get_pretrained_model(pretrain_path):
 # ans_root_dir = '/home/dl/data/taicang/data10000/label'
 img_root_dir = "/media/dl/HYX/samples/img"
 ans_root_dir = "/media/dl/HYX/samples/label"
-
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# device = torch.device('cpu')
 dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
 pretrained_path = os.path.join(os.path.split(dirname)[0], 'Save/model_0901.pth')
 # save_path = '/home/dl/data/taicang/data10000/OD_pytorch/Save/ssd.pth'

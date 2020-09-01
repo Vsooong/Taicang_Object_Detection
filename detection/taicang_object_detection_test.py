@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import matplotlib
 import cv2
-
+matplotlib.rc('figure', max_open_warning = 0)
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -198,7 +198,7 @@ def clear_test_samples(test_img_save_path):
         if i.endswith('det.jpg'):
             path = os.path.join(test_img_save_path, i)
             os.remove(path)
-            print('removed: ', path)
+
 
 
 if __name__ == "__main__":
