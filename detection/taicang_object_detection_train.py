@@ -6,12 +6,12 @@ import tkinter
 from PIL import Image
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-from detection.engine import train_one_epoch, evaluate
-import detection.utils as utils
+from engine import train_one_epoch, evaluate
+import utils as utils
 import torchvision.transforms as T
 import random
 from torch.utils.data import Dataset, DataLoader
-
+import sys
 
 # from torchsummary import summary
 
@@ -129,8 +129,8 @@ def train_model(model):
 
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    # optimizer = torch.optim.Adam(params, lr=0.001, amsgrad=False)
-    optimizer = torch.optim.SGD(params, lr=0.002, momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.AdamW(params, lr=0.001)
+    # optimizer = torch.optim.SGD(params, lr=0.002, momentum=0.9, weight_decay=0.0005)
     # and a learning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.5)
 
@@ -168,16 +168,18 @@ def get_pretrained_model(pretrain_path):
 # ans_root_dir = '/home/dl/data/taicang/data10000/label'
 img_root_dir = "/media/dl/HYX/samples/img"
 ans_root_dir = "/media/dl/HYX/samples/label"
-pretrained_path = '../Save/model_0901.pth'
+
+dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
+pretrained_path = os.path.join(os.path.split(dirname)[0], 'Save/model_0901.pth')
 # save_path = '/home/dl/data/taicang/data10000/OD_pytorch/Save/ssd.pth'
-save_path = '../Save/model_0901-2.pth'
+save_path = os.path.join(os.path.split(dirname)[0], 'Save/model_0901-2.pth')
 img_size = (360, 640)
 img_scale_factor = 2
 num_classes = 5
 
 if __name__ == "__main__":
     test_size = 100
-    num_epochs = 10
+    num_epochs = 20
     log_step = 15
     batch_size = 4
     model = get_pretrained_model(pretrained_path)

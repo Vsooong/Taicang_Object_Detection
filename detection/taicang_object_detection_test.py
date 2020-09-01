@@ -2,7 +2,7 @@ import os
 import torchvision
 import torch
 import numpy as np
-import tkinter
+import sys
 import matplotlib
 import cv2
 
@@ -13,7 +13,7 @@ from PIL import Image
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 import torchvision.transforms as T
-import detection.taicang_object_detection_train as train
+import taicang_object_detection_train as train
 
 COLORS1 = ['w', 'coral', 'lightgreen', 'red']
 COLORS2 = np.asarray([[255., 255., 255.], [255., 128., 64.], [181., 230., 29.]])
@@ -126,7 +126,7 @@ def draw_bbox_matplot(img, bbox, labels, confidence, save_dir, name):
 
 
 def object_detection_show(model, imgs, image_save_path, threshold):
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
     model.eval()
     for pic in imgs:
@@ -198,25 +198,26 @@ def clear_test_samples(test_img_save_path):
         if i.endswith('det.jpg'):
             path = os.path.join(test_img_save_path, i)
             os.remove(path)
-            # print('removed: ', path)
+            print('removed: ', path)
 
 
 if __name__ == "__main__":
     INSTANCE_CATEGORY_NAMES = [
         '1', '2', '3', '4', '5'
     ]
-    conf_thres = [0.2, 0.6, 0.5, 0.6]
+    conf_thres = [0.2, 0.6, 0.6, 0.6]
     num_classes = train.num_classes
     assert len(conf_thres) + 1 == len(INSTANCE_CATEGORY_NAMES) == num_classes
+    dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
 
     img_size = train.img_size
     img_scale_factor = train.img_scale_factor
     Draw_Style = 1
     save_path = train.save_path
-    test_img_save_path = "/media/dl/HYX/samples/test/"
+    # test_img_save_path = "/media/dl/HYX/samples/test/"\
+    test_img_save_path = os.path.join(os.path.split(dirname)[0], 'test_image')
     # test_img_save_path='F:/data/Taicang/samples'
-    test_img = [os.path.join(test_img_save_path, i) for i in os.listdir(test_img_save_path)]
     clear_test_samples(test_img_save_path)
-
+    test_img = [os.path.join(test_img_save_path, i) for i in os.listdir(test_img_save_path)]
     model = train.get_pretrained_model(save_path)
     object_detection_show(model, test_img, test_img_save_path, threshold=conf_thres)
