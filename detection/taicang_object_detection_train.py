@@ -147,16 +147,17 @@ def train_model(model):
         torch.save(model.state_dict(), save_path)
 
 
-def get_model(use_pretrain=False):
+def get_transfer_model():
     # get the model using our helper function
-    model = get_model_instance_segmentation(3,False)
+    model = get_model_instance_segmentation(3, False)
     model.load_state_dict(torch.load('../Save/model-4278.pth'))
-
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    return model
 
-    # if use_pretrain and os.path.exists(pretrained_model):
-    #     model.load_state_dict(torch.load(pretrained_model))
+def get_pretrained_model(pretrain_path):
+    model = get_model_instance_segmentation(num_classes, False)
+    model.load_state_dict(torch.load(pretrain_path))
     return model
 
 
@@ -164,19 +165,19 @@ def get_model(use_pretrain=False):
 # ans_root_dir = '/home/dl/data/taicang/data10000/label'
 img_root_dir = "/media/dl/HYX/samples/img"
 ans_root_dir = "/media/dl/HYX/samples/label"
-pretrained_model = '/home/dl/data/taicang/data10000/OD_pytorch/Save/model_0830.pth'
+pretrained_path = '../Save/model_0901.pth'
 # save_path = '/home/dl/data/taicang/data10000/OD_pytorch/Save/ssd.pth'
-save_path = '../Save/model_0901.pth'
+save_path = '../Save/model_0901-2.pth'
 img_size = (360, 640)
 img_scale_factor = 2
 num_classes = 5
 
 if __name__ == "__main__":
     test_size = 100
-    num_epochs = 5
+    num_epochs = 10
     log_step = 15
     batch_size = 4
-    model = get_model()
+    model = get_pretrained_model(pretrained_path)
     train_model(model)
 
     # for param_tensor in model.state_dict():

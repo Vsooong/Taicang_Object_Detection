@@ -38,7 +38,7 @@ def get_transform(train=True):
     return T.Compose(transforms)
 
 
-def get_prediction(img, model, threshold=0.5, device=torch.device('cpu')):
+def get_prediction(img, model, threshold, device=torch.device('cpu')):
     trans = get_transform()
     image = trans(img).to(device)
     pred = model([image])
@@ -46,7 +46,7 @@ def get_prediction(img, model, threshold=0.5, device=torch.device('cpu')):
 
     pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred[0]['boxes'].detach().cpu().numpy())]  # Bounding boxes
     pred_score = list(pred[0]['scores'].detach().cpu().numpy())
-    pred_t = [pred_score.index(x) for x in pred_score if x > threshold]
+    pred_t = [index for index in range(len(pred_score)) if pred_score[index] > threshold[pred_class[index]]]
     pred_boxes = np.asarray(pred_boxes)
     pred_class = np.asarray(pred_class)
     pred_score = np.asarray(pred_score)
@@ -125,7 +125,7 @@ def draw_bbox_matplot(img, bbox, labels, confidence, save_dir, name):
     plt.close(fig)
 
 
-def object_detection_show(model, imgs, image_save_path, threshold=0.5):
+def object_detection_show(model, imgs, image_save_path, threshold):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # model = get_model_instance_segmentation(num_classes)
     # model.load_state_dict(torch.load(model_save_path, map_location=device))
@@ -195,16 +195,6 @@ def object_detection_show_batch(model, imgs, image_save_path, batch_size=8, thre
         start_idx += batch_size
 
 
-def get_model_instance_segmentation(num_classes):
-    # load an instance segmentation model pre-trained pre-trained on COCO
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-    # get number of input features for the classifier
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-    return model
-
-
 def clear_test_samples(test_img_save_path):
     for i in sorted(os.listdir(test_img_save_path)):
         if i.endswith('det.jpg'):
@@ -217,16 +207,18 @@ if __name__ == "__main__":
     INSTANCE_CATEGORY_NAMES = [
         '1', '2', '3', '4', '5'
     ]
+    conf_thres = [0.2, 0.6, 0.5, 0.6]
     num_classes = train.num_classes
+    assert len(conf_thres) + 1 == len(INSTANCE_CATEGORY_NAMES) == num_classes
+
     img_size = train.img_size
     img_scale_factor = train.img_scale_factor
-    conf_thres = 0.3
     Draw_Style = 1
     save_path = train.save_path
     test_img_save_path = "/media/dl/HYX/samples/test/"
     # test_img_save_path='F:/data/Taicang/samples'
     test_img = [os.path.join(test_img_save_path, i) for i in os.listdir(test_img_save_path)]
-    model = train.get_model()
-    # object_detection_show(model, test_img, test_img_save_path, threshold=conf_thres)
-
-    clear_test_samples(test_img_save_path)
+    model = train.get_pretrained_model()
+    object_detection_show(model, test_img, test_img_save_path, threshold=conf_thres)
+    #
+    # clear_test_samples(test_img_save_path)
