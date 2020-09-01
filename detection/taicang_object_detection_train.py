@@ -11,7 +11,9 @@ import detection.utils as utils
 import torchvision.transforms as T
 import random
 from torch.utils.data import Dataset, DataLoader
-from torchsummary import summary
+
+
+# from torchsummary import summary
 
 
 class TaiCangDataset(Dataset):
@@ -79,9 +81,9 @@ class TaiCangDataset(Dataset):
         return len(self.imgs)
 
 
-def get_model_instance_segmentation(num_classes):
+def get_model_instance_segmentation(num_classes, pretrained=True):
     # load an instance segmentation model pre-trained pre-trained on COCO
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=pretrained)
     # get number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     # replace the pre-trained head with a new one
@@ -97,14 +99,8 @@ def get_transform(train=True):
     #     transforms.append(T.RandomHorizontalFlip(0.5))
     return T.Compose(transforms)
 
-def get_model():
-    # get the model using our helper function
-    model = get_model_instance_segmentation(num_classes)
-    if use_pretrain and os.path.exists(pretrained_model):
-        model.load_state_dict(torch.load(pretrained_model))
-    return model
 
-def train_model():
+def train_model(model):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda:1') if torch.cuda.is_available() else torch.device('cpu')
     print('Using device: ', device)
@@ -128,7 +124,6 @@ def train_model():
         dataset_test, batch_size=batch_size, shuffle=False,
         collate_fn=utils.collate_fn)
 
-    model=get_model()
     # move model to the right device
     model.to(device)
 
@@ -152,29 +147,38 @@ def train_model():
         torch.save(model.state_dict(), save_path)
 
 
-img_root_dir = '/home/dl/data/taicang/data10000/img'
-ans_root_dir = '/home/dl/data/taicang/data10000/label'
-# img_root_dir = "/media/dl/HYX/samples/img"
-# ans_root_dir = "/media/dl/HYX/samples/label"
-num_classes =3
+def get_model(use_pretrain=False):
+    # get the model using our helper function
+    model = get_model_instance_segmentation(3,False)
+    model.load_state_dict(torch.load('../Save/model-4278.pth'))
+
+    in_features = model.roi_heads.box_predictor.cls_score.in_features
+    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+    # if use_pretrain and os.path.exists(pretrained_model):
+    #     model.load_state_dict(torch.load(pretrained_model))
+    return model
+
+
+# img_root_dir = '/home/dl/data/taicang/data10000/img'
+# ans_root_dir = '/home/dl/data/taicang/data10000/label'
+img_root_dir = "/media/dl/HYX/samples/img"
+ans_root_dir = "/media/dl/HYX/samples/label"
 pretrained_model = '/home/dl/data/taicang/data10000/OD_pytorch/Save/model_0830.pth'
-use_pretrain = True
 # save_path = '/home/dl/data/taicang/data10000/OD_pytorch/Save/ssd.pth'
-save_path = '../Save/ssd.pth'
+save_path = '../Save/model_0901.pth'
 img_size = (360, 640)
 img_scale_factor = 2
+num_classes = 5
 
 if __name__ == "__main__":
     test_size = 100
     num_epochs = 5
     log_step = 15
     batch_size = 4
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model=get_model()
-    model.load_state_dict(torch.load('../Save/ssd.pth'))
+    model = get_model()
+    train_model(model)
 
-    # model=model.to(device)
-    for param_tensor in model.state_dict():
-        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    summary(model,(3,360,640))
-    # train_model()
+    # for param_tensor in model.state_dict():
+    #     print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+    # summary(model,(3,360,640))
